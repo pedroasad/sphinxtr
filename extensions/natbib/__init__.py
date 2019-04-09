@@ -12,8 +12,9 @@ import pybtex.style.names.plain
 import pybtex.style.names.lastfirst
 import pybtex.backends.plaintext
 
+import codecs
 import collections
-import latex_codec
+from . import latex_codec
 import os
 import re
 
@@ -52,6 +53,9 @@ ROLES = [
   'author', 'authors', 'year', 'yearpar', 'text', 'title'
 ]
 
+def get_latex_codec():
+  return codecs.CodecInfo(*codecs.lookup('latex'))
+
 SUBSUP_RE = re.compile(r'([\s\S^\^\_]*)([\^\_]){?([\S\s^}]*)}?')
 def latex_to_nodes(text):
   """
@@ -78,8 +82,8 @@ def parse_keys(rawtext):
   #
   # TODO: This isn't the best implementation and this should also
   #       handle errors
-  pre = u''
-  post = u''
+  pre = ''
+  post = ''
   keys = []
   for k in rawtext.split(','):
     k = k.strip() # Remove leading and trailing whitespace
@@ -100,7 +104,7 @@ def parse_keys(rawtext):
             post += c
       if bc == bo and bc == 1:
         post = pre
-        pre = u''
+        pre = ''
     else:
       k = k[0]
     keys.append(k)
@@ -110,7 +114,7 @@ def parse_keys(rawtext):
 class Citations(object):
   def __init__(self, env):
     self.conf = DEFAULT_CONF.copy()
-    self.conf.update(env.config.natbib)
+    self.conf.update(env.app.config.natbib)
 
     self.file_name = None
     self.parser = None
@@ -156,9 +160,9 @@ class CitationTransform(object):
     if len(authors) == 0:
       author = ''
     elif len(authors) > 2 and not all_authors:
-      author = u'%s et al.' % authors[0].last()[0]
+      author = '%s et al.' % authors[0].last()[0]
     else:
-      author = u"%s and %s" % (u', '.join([a.last()[0] for a in authors[:-1]]),
+      author = "%s and %s" % (', '.join([a.last()[0] for a in authors[:-1]]),
                                           authors[-1].last()[0])
     author = author.replace('{', '')
     author = author.replace('}', '')
@@ -172,7 +176,7 @@ class CitationTransform(object):
     if global_keys is not None:
         self.global_keys = global_keys
     bo, bc = self.config['brackets']
-    sep = u'%s ' % self.config['separator']
+    sep = '%s ' % self.config['separator']
     style = self.config['style']
     all_auths = (cmd.endswith('s'))
     alt = (cmd.startswith('alt') or \
@@ -185,12 +189,12 @@ class CitationTransform(object):
       node = nodes.inline('', '', classes=['citation'])
 
     if self.pre:
-      pre = u"%s " % self.pre.decode('latex')
+      pre = "%s " % get_latex_codec().decode(self.pre)
       node += nodes.inline(pre, pre, classes=['pre'])
 
     for i, ref in enumerate(self.refs):
       authors = ref.persons.get('author', [])
-      author_text = self.get_author(authors, all_auths).decode('latex')
+      author_text = get_latex_codec().decode(self.get_author(authors, all_auths))
       lrefuri = refuri + '#citation-' + nodes.make_id(ref.key)
 
       if i > 0 and i < len(self.refs):
@@ -242,7 +246,7 @@ class CitationTransform(object):
           node += nodes.inline(bc, bc)
 
     if self.post:
-      post = u", %s" % self.post.decode('latex')
+      post = ", %s" % get_latex_codec().decode(self.post)
       node += nodes.inline(post, post, classes=['post'])
 
     if (cmd.startswith('p') or cmd == 'yearpar') and style != 'super':
@@ -255,7 +259,7 @@ def sort_references(refs, citations):
   def sortkey(key):
     # sort by author last names, but if no author, sort by title
     citation = citations.get(key)
-    authorsort = u''.join(map(unicode, citation.persons.get('author', '')))
+    authorsort = ''.join(map(str, citation.persons.get('author', '')))
     if len(authorsort) > 0:
         authorsort = authorsort.replace('{', '')
         authorsort = authorsort.replace('}', '')
@@ -341,7 +345,7 @@ class CitationConfDirective(Directive):
     except:
       pass
 
-    for k, v in self.options.items():
+    for k, v in list(self.options.items()):
       env.temp_data['cite_%s' % k] = v
 
     return []
@@ -371,7 +375,7 @@ class CitationReferencesDirective(Directive):
       authortext = namestyler.format(author, abbr=True).format().render(plaintext)
       authortext = authortext.replace('{', '')
       authortext = authortext.replace('}', '')
-      authortext = authortext.decode('latex')
+      authortext = get_latex_codec().decode(authortext)
       text = authortext
 
       text = text.strip()
@@ -390,7 +394,7 @@ class CitationReferencesDirective(Directive):
     if title is None:
         title = ref.fields.get('key')
     if title:
-      title = title.decode('latex')
+      title = get_latex_codec().decode(title)
       title = title.replace('{', '')
       title = title.replace('}', '')
       node += nodes.inline(title, title, classes=['title'])
@@ -399,7 +403,7 @@ class CitationReferencesDirective(Directive):
     # @phdthesis
     if ref.type == 'phdthesis':
         school = ref.fields.get('school')
-        school = school.decode('latex')
+        school = get_latex_codec().decode(school)
         text = 'PhD Thesis, %s, ' % school
         node += nodes.inline(text, text)
 
@@ -408,7 +412,7 @@ class CitationReferencesDirective(Directive):
     if not pub:
         pub = ref.fields.get('booktitle')
     if pub:
-      pub = pub.decode('latex')
+      pub = get_latex_codec().decode(pub)
       pub = pub.replace('{', '')
       pub = pub.replace('}', '')
       node += nodes.emphasis(pub, pub, classes=['publication'])
@@ -420,7 +424,7 @@ class CitationReferencesDirective(Directive):
 
     if pub is None:
       howpub = ref.fields.get('howpublished')
-      if howpub is not None and howpub.startswith('\url{'):
+      if howpub is not None and howpub.startswith('\\url{'):
         url = howpub[5:-1]
         refnode = nodes.reference('', '', internal=False, refuri=url)
         refnode += nodes.Text(url, url)
@@ -429,17 +433,17 @@ class CitationReferencesDirective(Directive):
           node += nodes.inline(', ', ', ')
 
     if vol:
-      vol = vol.decode('latex')
+      vol = get_latex_codec().decode(vol)
       node += nodes.inline(vol, vol, classes=['volume'])
       node += nodes.inline(':', ':')
 
     if pages:
-      pages = pages.decode('latex')
+      pages = get_latex_codec().decode(pages)
       node += nodes.inline(pages, pages, classes=['pages'])
       node += nodes.inline(', ', ', ')
 
     if year:
-      year = year.decode('latex')
+      year = get_latex_codec().decode(year)
       node += nodes.inline(year, year, classes=['year'])
       node += nodes.inline('.', '.')
 
@@ -509,7 +513,7 @@ class CitationDomain(Domain):
     super(CitationDomain, self).__init__(env)
 
     # Update conf
-    env.domaindata['cite']['conf'].update(env.config.natbib)
+    env.domaindata['cite']['conf'].update(env.app.config.natbib)
 
     # TODO: warn if citations can't parse bibtex file
     self.citations = Citations(env)

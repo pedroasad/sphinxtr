@@ -36,8 +36,8 @@ with the following command::
 
 Otherwise you can maybe find other ways to install the following packages:
 
-* `Python 2 <http://www.python.org/getit/>`_ (preinstalled on most systems)
-* `Setuptools <https://pypi.python.org/pypi/setuptools/1.1.6#installation-instructions>`_
+* `Python 3 <http://www.python.org/getit/>`_ (preinstalled on most systems)
+* `Setuptools <https://packaging.python.org/tutorials/installing-packages/>`_
   (look for the most up to date version)
 * `Virtualenv <http://www.virtualenv.org/en/latest/#installation>`_
 * `Tex Live <http://www.tug.org/texlive/quickinstall.html>`_
@@ -56,6 +56,16 @@ this project from other Python projects you might have::
 Then install the required Python packages::
 
     pip install -r requirements.txt
+
+The versions of the required packages are specified in `requirements.txt
+<requirements.txt>`_ as ``>=``, *e.g.*, ``sphinx>=2.0.1``, which means ``pip``
+will try to install any version of the `sphinx package
+<https://pypi.org/project/Sphinx/>`_ equal or later than ``2.0.1``. The package
+versions specified there are guaranteed to work on `Ubuntu 18.04 (Bionic)
+<http://releases.ubuntu.com/18.04/>`_, but if you encounter any usage problems,
+try first downgrading the packages to their minimum versions. It is also
+possible that former versions work, but this has not been tested with the
+current release.
 
 Building
 ========

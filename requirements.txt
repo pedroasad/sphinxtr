@@ -1,2 +1,2 @@
-sphinx
-pybtex
+sphinx>=2.0.1
+pybtex>=0.22.2

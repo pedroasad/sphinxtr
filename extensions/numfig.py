@@ -101,7 +101,7 @@ def doctree_resolved(app, doctree, docname):
 
         secnums = []
         fignames_by_secnum = {}
-        for figdocname, figurelist in env.docname_figs.iteritems():
+        for figdocname, figurelist in env.docname_figs.items():
             if figdocname not in env.toc_secnumbers:
                 continue
             secnum = env.toc_secnumbers[figdocname]['']
@@ -114,7 +114,7 @@ def doctree_resolved(app, doctree, docname):
         for secnum in secnums:
             if secnum[0] != last_secnum:
                 figid = 1
-            for figname, subfigs in fignames_by_secnum[secnum].iteritems():
+            for figname, subfigs in fignames_by_secnum[secnum].items():
                 if figname_is_id(figname):
                     continue
                 figids[figname] = str(secnum[0]) + '.' + str(figid)
