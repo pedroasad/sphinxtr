@@ -56,6 +56,9 @@ ROLES = [
 def get_latex_codec():
   return codecs.CodecInfo(*codecs.lookup('latex'))
 
+def decode_and_join(text):
+  return ' '.join(str(x) for x in get_latex_codec().decode(text))
+
 SUBSUP_RE = re.compile(r'([\s\S^\^\_]*)([\^\_]){?([\S\s^}]*)}?')
 def latex_to_nodes(text):
   """
@@ -375,7 +378,7 @@ class CitationReferencesDirective(Directive):
       authortext = namestyler.format(author, abbr=True).format().render(plaintext)
       authortext = authortext.replace('{', '')
       authortext = authortext.replace('}', '')
-      authortext = get_latex_codec().decode(authortext)
+      authortext = decode_and_join(authortext)
       text = authortext
 
       text = text.strip()
@@ -394,7 +397,7 @@ class CitationReferencesDirective(Directive):
     if title is None:
         title = ref.fields.get('key')
     if title:
-      title = get_latex_codec().decode(title)
+      title = decode_and_join(title)
       title = title.replace('{', '')
       title = title.replace('}', '')
       node += nodes.inline(title, title, classes=['title'])
@@ -412,7 +415,7 @@ class CitationReferencesDirective(Directive):
     if not pub:
         pub = ref.fields.get('booktitle')
     if pub:
-      pub = get_latex_codec().decode(pub)
+      pub = decode_and_join(pub)
       pub = pub.replace('{', '')
       pub = pub.replace('}', '')
       node += nodes.emphasis(pub, pub, classes=['publication'])
